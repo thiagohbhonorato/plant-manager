@@ -127,7 +127,6 @@ export function PlantSelect() {
           renderItem={({item, index}) => (
             <PlantCardPrimery 
               data={item} 
-              key={`${index}`}
               onPress={()=>handlePlantSelect(item)}
               />
           )}

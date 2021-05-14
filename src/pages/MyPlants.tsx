@@ -3,18 +3,20 @@ import {
   StyleSheet,
   View,
   Text,
-  Image
+  Image,
+  Alert,
+  FlatList
 } from 'react-native'
 import { Header } from '../components/Header'
 
 import colors from '../styles/colors'
 import waterdrop from '../assets/waterdrop.png'
-import { FlatList } from 'react-native-gesture-handler'
-import { loadPlants, PlantProps } from '../libs/storage'
+import { loadPlants, PlantProps, removePlant, StoragePlantProps } from '../libs/storage'
 import { formatDistance } from 'date-fns/esm'
 import { ptBR } from 'date-fns/locale'
 import fonts from '../styles/fonts'
 import { PlantCardSecundary } from '../components/PlantCardSecundary'
+import { Load } from '../components/Load'
 
 export function MyPlants() {
   const [myPlants, setMyPlants] = useState<PlantProps[]>([]);
@@ -31,7 +33,7 @@ export function MyPlants() {
         {locale: ptBR}
       );
 
-      setNextWatered(`Não esqueça de regar a ${plantsStoraged[0].name} à ${nextTime} horas.`)
+      setNextWatered(`Não esqueça de regar a ${plantsStoraged[0].name} à ${nextTime}.`)
       
       setMyPlants(plantsStoraged);
       setLoading(false);
@@ -39,6 +41,30 @@ export function MyPlants() {
 
     loadStorageData();
   }, []);
+
+  function handleRemove(plant: PlantProps) {
+    Alert.alert('Remover',`Deseja remover a ${plant.name}?`,[
+      {
+        text: "Não 🙏",
+        style: 'cancel',
+      },{
+        text: 'Sim 😥',
+        onPress: async () => {
+          try {
+            await removePlant(plant.id);
+            setMyPlants((oldData) => 
+              oldData.filter((item) => item.id !== plant.id)
+            );
+          } catch (error) {
+            Alert.alert("Não foi possível remover! 😥");
+          }
+        }
+      }
+    ])
+  }
+
+  if (loading)
+    return <Load />
 
   return (
     <View style={styles.container}>
@@ -58,10 +84,13 @@ export function MyPlants() {
           data={myPlants}
           keyExtractor={(item) => String(item.id)}
           renderItem={({item}) => (
-            <PlantCardSecundary data={item}/>
+            <PlantCardSecundary 
+              data={item}
+              handleRemove={()=>{handleRemove(item)}}
+            />
           )}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{flex: 1}}
+          contentContainerStyle={styles.plantsList}
         />
       </View>
     </View>
@@ -104,5 +133,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.heading,
     color: colors.heading,
     marginVertical: 20,
+  },
+  plantsList: {
+
   }
 })
